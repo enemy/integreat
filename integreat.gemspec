@@ -5,25 +5,29 @@
 
 Gem::Specification.new do |s|
   s.name = %q{integreat}
-  s.version = "0.1.0"
+  s.version = "0.1.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Matti Paksula"]
   s.date = %q{2011-04-25}
+  s.default_executable = %q{integreat}
   s.description = %q{Integration testing made easy}
   s.email = %q{matti.paksula@enemy.fi}
+  s.executables = ["integreat"]
   s.extra_rdoc_files = [
     "LICENSE.txt",
     "README.rdoc"
   ]
   s.files = [
     ".document",
+    ".rvmrc",
     "Gemfile",
     "Gemfile.lock",
     "LICENSE.txt",
     "README.rdoc",
     "Rakefile",
     "VERSION",
+    "bin/integreat",
     "integreat.gemspec",
     "lib/integreat.rb",
     "test/helper.rb",
