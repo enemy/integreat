@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
     "README.rdoc",
     "Rakefile",
     "VERSION",
+    "integreat.gemspec",
     "lib/integreat.rb",
     "test/helper.rb",
     "test/test_integreat.rb"
