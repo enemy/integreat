@@ -17,16 +17,27 @@ module Integreat
   end
 
   module Runner
-    @messages = []
-    @failures = 0
-    @steps_run = 0
+    @all_messages = []
 
+    def self.init
+      @messages = []
+      @failures = 0
+      @steps_run = 0
+      @assertions = 0
+    end
+    
     def self.messages
       @messages 
+    end
+    
+    def self.all_messages
+      @all_messages
     end
 
     def self.fail(message)
       @messages << message
+      @all_messages << message
+      
       @failures += 1
     end
 
@@ -34,21 +45,36 @@ module Integreat
       @failures
     end
 
-    def self.step_run
+    def self.run_step(name)
+      @current_step = name
       @steps_run += 1
     end  
 
     def self.steps_run
       @steps_run
     end
+    
+    def self.assert
+      @assertions += 1
+    end
+    
+    def self.assertions
+      @assertions
+    end
+    
+    def self.current_step
+      @current_step
+    end
   end  
   
   class Context
     def assert(expected, actual)
+      Integreat::Runner.assert
+      
       success = expected == actual
       
       unless success
-        Integreat::Runner.fail "FAIL in #{caller[0]}: #{expected.to_s} is not #{actual.to_s}"
+        Integreat::Runner.fail "Assertation FAILED in #{caller[0]}, step #{Integreat::Runner.current_step} -- expected: #{expected.to_s} actual: #{actual.to_s}"
       end
     end
 
@@ -78,7 +104,7 @@ def Integreat(description = nil, &block)
         
     def Step(name, &block)
       puts " Step: #{name}"
-      Integreat::Runner.step_run
+      Integreat::Runner.run_step(name)
       @context.instance_eval(&block)
     end
 
@@ -90,6 +116,7 @@ def Integreat(description = nil, &block)
     setup_names = Array(names)
     ensure_context
 
+    puts ""
     print "Using setups: #{names.join(',')}"
     setup_names.each do |name|
       @context.instance_eval(&Integreat::Setups.get(name))
@@ -97,6 +124,7 @@ def Integreat(description = nil, &block)
     puts ""
   end
   
+  Integreat::Runner.init
   
   yield
 
@@ -104,11 +132,19 @@ def Integreat(description = nil, &block)
   if @context
     puts
     puts "-- Summary for #{@description} context --"
-    puts "   Steps: #{Integreat::Runner.steps_run}, Failed: #{Integreat::Runner.messages.size}"
+    puts "   Steps: #{Integreat::Runner.steps_run}, Assertions: #{Integreat::Runner.assertions}, Failed: #{Integreat::Runner.messages.size}"
     puts ""
     Integreat::Runner.messages.each do |message|
       puts message
     end
+    
+    puts ""
+    puts "All failures"
+    puts "-"*80
+    Integreat::Runner.all_messages.each do |message|
+      puts message
+    end
+    
   end
     
 end
