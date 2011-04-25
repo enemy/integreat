@@ -13,11 +13,11 @@ require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "integreat"
-  gem.homepage = "http://github.com/matti/integreat"
+  gem.homepage = "http://github.com/enemy/integreat"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
-  gem.email = "matti.paksula@iki.fi"
+  gem.summary = "A great integration testing framework"
+  gem.description = "Integration testing made easy"
+  gem.email = "matti.paksula@enemy.fi"
   gem.authors = ["Matti Paksula"]
   # Include your dependencies below. Runtime dependencies are required when using your gem,
   # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
