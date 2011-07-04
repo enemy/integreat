@@ -1,10 +1,11 @@
+
 module Integreat
-  
+     
   module Setups
     @setups = {}
     
     def self.store(name, &block)
-      @setups[name] = block  
+      @setups[name] = block
     end
   
     def self.get(name)
@@ -16,135 +17,135 @@ module Integreat
     end
   end
 
-  module Runner
-    @all_messages = []
-
-    def self.init
-      @messages = []
-      @failures = 0
+  class Runner
+    require 'term/ansicolor'
+    include Term::ANSIColor
+    
+    attr_reader :assertions, :current_step, :steps_run
+    
+    
+    def initialize
       @steps_run = 0
       @assertions = 0
+      @@runner = self
     end
+
     
-    def self.messages
-      @messages 
-    end
-    
-    def self.all_messages
-      @all_messages
+    def fail!(message)
+      puts red(bold("Assertation failed"))
+      puts message
+
+      exit 1
     end
 
-    def self.fail(message)
-      @messages << message
-      @all_messages << message
-      
-      @failures += 1
-    end
-
-    def self.failures
-      @failures
-    end
-
-    def self.run_step(name)
+    def run_step(name)
       @current_step = name
       @steps_run += 1
     end  
-
-    def self.steps_run
-      @steps_run
-    end
     
-    def self.assert
+    def assert
       @assertions += 1
     end
     
-    def self.assertions
-      @assertions
+    def self.assert
+      @@runner.assert
     end
     
     def self.current_step
-      @current_step
+      @@runner.current_step
     end
+    
+    def self.fail!(message)
+      @@runner.fail!(message)
+    end
+    
   end  
+
   
   class Context
     def assert(expected, actual)
       Integreat::Runner.assert
       
       success = expected == actual
-      
+
       unless success
-        Integreat::Runner.fail "Assertation FAILED in #{caller[0]}, step #{Integreat::Runner.current_step} -- expected: #{expected.to_s} actual: #{actual.to_s}"
+        Integreat::Runner.fail! "Assertation FAILED in #{caller[0]}, step #{Integreat::Runner.current_step} -- expected: #{expected.to_s} actual: #{actual.to_s}"
       end
     end
 
   end
 end
 
-def Integreat(description = nil, &block)  
-  @description = description
-  @context = nil
+
+
+def Integreat(description = "unnamed", &block)  
+  require 'term/ansicolor'
+  extend Term::ANSIColor
   
-  def ensure_context
-    unless @context
-      puts "\n\nContext for #{@description}"
-      @context = Integreat::Context.new
-      puts "-"*80
-    end   
+  def horizontal_line(length = 80)
+    puts "-"*length
   end
   
-  def Setup(name, &block)
+  @description = description
+  
+  
+  puts blue(bold("\n\nIntegreat '#{@description}' started"))
+  horizontal_line
+  
+  
+  @runner = Integreat::Runner.new
+  
+  
+
+  def ensure_context
+    return if @context
+
+    @context = Integreat::Context.new
+    puts " + Created context for #{@description}"
+  end
+  
+    
+   def Step(name, &block)
+     ensure_context
+     
+     puts " Step: #{name}"
+     @runner.run_step(name)
+     @context.instance_eval(&block)
+   end
+  
+  def Store(name, &block)
     Integreat::Setups.store(name, &block)
+    puts yellow("Stored setup: #{bold(name)}")
   end
   
   def Test(name)
-    ensure_context
-
     puts "\nRunning test: #{name}"
-        
-    def Step(name, &block)
-      puts " Step: #{name}"
-      Integreat::Runner.run_step(name)
-      @context.instance_eval(&block)
-    end
+    horizontal_line
 
     yield
     
   end
   
-  def Use(*names)
+  def Perform(*names)
     setup_names = Array(names)
-    ensure_context
 
-    puts ""
-    print "Using setups: #{names.join(',')}"
+    puts "\nUsing setups: #{names.join(',')}"
+
     setup_names.each do |name|
-      @context.instance_eval(&Integreat::Setups.get(name))
+      stored_setup = Integreat::Setups.get(name)
+      stored_setup.call
     end
     puts ""
   end
   
-  Integreat::Runner.init
   
   yield
 
-  
   if @context
     puts
     puts "-- Summary for #{@description} context --"
-    puts "   Steps: #{Integreat::Runner.steps_run}, Assertions: #{Integreat::Runner.assertions}, Failed: #{Integreat::Runner.messages.size}"
+    puts "   Steps: #{@runner.steps_run}, Assertions: #{@runner.assertions}"
     puts ""
-    Integreat::Runner.messages.each do |message|
-      puts message
-    end
-    
-    puts ""
-    puts "All failures"
-    puts "-"*80
-    Integreat::Runner.all_messages.each do |message|
-      puts message
-    end
-    
   end
     
 end
