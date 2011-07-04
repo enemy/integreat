@@ -1,18 +1,18 @@
 
 module Integreat
      
-  module Setups
-    @setups = {}
+  module Stored
+    @storeds = {}
     
     def self.store(name, &block)
-      @setups[name] = block
+      @storeds[name] = block
     end
   
     def self.get(name)
-      if @setups[name]
-        @setups[name]
+      if @storeds[name]
+        @storeds[name]
       else
-        raise "No setup stored with #{name}"
+        raise "Nothing stored with #{name}"
       end
     end
   end
@@ -32,7 +32,7 @@ module Integreat
 
     
     def fail!(message)
-      puts red(bold("Assertation failed"))
+      puts red(bold("\nAssertation failed"))
       puts message
 
       exit 1
@@ -65,11 +65,11 @@ module Integreat
   class Context
     def assert(expected, actual)
       Integreat::Runner.assert
-      
+
       success = expected == actual
 
       unless success
-        Integreat::Runner.fail! "Assertation FAILED in #{caller[0]}, step #{Integreat::Runner.current_step} -- expected: #{expected.to_s} actual: #{actual.to_s}"
+        Integreat::Runner.fail! "In #{caller[0]}\nStep: #{Integreat::Runner.current_step}\nExpected: #{expected.to_s}\n  Actual: #{actual.to_s}"
       end
     end
 
@@ -101,7 +101,6 @@ def Integreat(description = "unnamed", &block)
     return if @context
 
     @context = Integreat::Context.new
-    puts " + Created context for #{@description}"
   end
   
     
@@ -114,38 +113,30 @@ def Integreat(description = "unnamed", &block)
    end
   
   def Store(name, &block)
-    Integreat::Setups.store(name, &block)
-    puts yellow("Stored setup: #{bold(name)}")
+    Integreat::Stored.store(name, &block)
+    puts yellow("Stored block with name: #{bold(name)}")
   end
   
   def Test(name)
-    puts "\nRunning test: #{name}"
-    horizontal_line
+    puts "\nTest: #{bold(name)}"
 
     yield
-    
   end
   
   def Perform(*names)
-    setup_names = Array(names)
-
-    puts "\nUsing setups: #{names.join(',')}"
-
-    setup_names.each do |name|
-      stored_setup = Integreat::Setups.get(name)
-      stored_setup.call
+    Array(names).each do |name|
+      stored_step = Integreat::Stored.get(name)
+      stored_step.call
     end
-    puts ""
   end
   
   
   yield
 
   if @context
-    puts
-    puts "-- Summary for #{@description} context --"
-    puts "   Steps: #{@runner.steps_run}, Assertions: #{@runner.assertions}"
-    puts ""
+    puts green("\n\nIntegreat '#{@description}' ended")
+    puts green(horizontal_line)
+    puts green("  Steps: #{@runner.steps_run}, Assertions: #{@runner.assertions}")
   end
     
 end
